@@ -1,10 +1,12 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, Sparkles, Check } from "lucide-react";
+import { MapPin, DollarSign, Briefcase, Bookmark, BookmarkCheck, ExternalLink, Sparkles, Check, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatSalary, timeAgo } from "@/lib/format";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useServerFn } from "@tanstack/react-start";
+import { submitMatchFeedback } from "@/lib/ai.functions";
 
 export interface Job {
   id: string;
@@ -38,6 +40,7 @@ export function JobCard({
   onScore?: (jobId: string) => void;
 }) {
   const qc = useQueryClient();
+  const feedbackFn = useServerFn(submitMatchFeedback);
 
   const saveMut = useMutation({
     mutationFn: async () => {
@@ -53,6 +56,7 @@ export function JobCard({
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["saved-jobs"] });
+      qc.invalidateQueries({ queryKey: ["saved-jobs-ids"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       toast.success(saved ? "Removed from saved" : "Saved for later");
     },
@@ -68,10 +72,19 @@ export function JobCard({
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["applied-jobs"] });
+      qc.invalidateQueries({ queryKey: ["applied-jobs-ids"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       toast.success("Marked as applied");
       if (job.apply_url) window.open(job.apply_url, "_blank", "noopener,noreferrer");
     },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const feedbackMut = useMutation({
+    mutationFn: async (rating: 1 | -1) => {
+      await feedbackFn({ data: { jobId: job.id, feedback: rating } });
+    },
+    onSuccess: () => toast.success("Thanks — future scores will calibrate."),
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -125,10 +138,28 @@ export function JobCard({
       <footer className="mt-1 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {typeof matchScore === "number" ? (
-            <div className="flex items-center gap-2 rounded-full bg-gradient-primary/10 px-3 py-1 text-xs font-semibold">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span className="text-gradient">{matchScore}% match</span>
-            </div>
+            <>
+              <div className="flex items-center gap-2 rounded-full bg-gradient-primary/10 px-3 py-1 text-xs font-semibold">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                <span className="text-gradient">{matchScore}% match</span>
+              </div>
+              <button
+                aria-label="Score looks right"
+                onClick={() => feedbackMut.mutate(1)}
+                disabled={feedbackMut.isPending}
+                className="rounded-full border border-border p-1.5 text-muted-foreground transition hover:text-success"
+              >
+                <ThumbsUp className="h-3.5 w-3.5" />
+              </button>
+              <button
+                aria-label="Score is off"
+                onClick={() => feedbackMut.mutate(-1)}
+                disabled={feedbackMut.isPending}
+                className="rounded-full border border-border p-1.5 text-muted-foreground transition hover:text-destructive"
+              >
+                <ThumbsDown className="h-3.5 w-3.5" />
+              </button>
+            </>
           ) : onScore ? (
             <button
               onClick={() => onScore(job.id)}

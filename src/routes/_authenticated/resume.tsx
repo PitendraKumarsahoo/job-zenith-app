@@ -148,6 +148,7 @@ function ResumePage() {
                 </div>
               )}
               {analysis.summary && <p className="text-sm text-muted-foreground">{analysis.summary}</p>}
+
               {Array.isArray(analysis.strengths) && analysis.strengths.length > 0 && (
                 <div>
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-success">Strengths</div>
@@ -156,6 +157,7 @@ function ResumePage() {
                   </ul>
                 </div>
               )}
+
               {Array.isArray(analysis.gaps) && analysis.gaps.length > 0 && (
                 <div>
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-warning">Gaps to fill</div>
@@ -164,12 +166,61 @@ function ResumePage() {
                   </ul>
                 </div>
               )}
+
+              {Array.isArray(analysis.rewrite_suggestions) && analysis.rewrite_suggestions.length > 0 && (
+                <div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">Rewrite suggestions</div>
+                  <ul className="space-y-3">
+                    {analysis.rewrite_suggestions.map((r: any, i: number) => (
+                      <li key={i} className="rounded-lg border border-border bg-card/50 p-3 text-sm">
+                        <div className="text-xs text-muted-foreground line-through">{r.original}</div>
+                        <div className="mt-1 text-foreground">→ {r.improved}</div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {Array.isArray(analysis.ats_keywords_to_add) && analysis.ats_keywords_to_add.length > 0 && (
+                <div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-accent">ATS keywords to add</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {analysis.ats_keywords_to_add.map((k: string) => (
+                      <span key={k} className="rounded-md border border-accent/40 bg-accent/10 px-2 py-1 text-xs text-accent">{k}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {Array.isArray(analysis.suggested_roles) && analysis.suggested_roles.length > 0 && (
                 <div>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Suggested roles</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {analysis.suggested_roles.map((r: string) => <span key={r} className="rounded-md bg-muted px-2 py-1 text-xs">{r}</span>)}
-                  </div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Best-fit roles</div>
+                  <ul className="space-y-2">
+                    {analysis.suggested_roles.map((r: any, i: number) => {
+                      const isObj = typeof r === "object" && r !== null;
+                      const role = isObj ? r.role : r;
+                      const why = isObj ? r.why : null;
+                      const fit = isObj && typeof r.fit_score === "number" ? r.fit_score : null;
+                      return (
+                        <li key={i} className="rounded-lg border border-border bg-card/50 p-2.5 text-sm">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium">{role}</span>
+                            {fit !== null && <span className="text-xs font-semibold text-gradient">{fit}%</span>}
+                          </div>
+                          {why && <div className="mt-1 text-xs text-muted-foreground">{why}</div>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+
+              {Array.isArray(analysis.red_flags) && analysis.red_flags.length > 0 && (
+                <div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-destructive">Red flags</div>
+                  <ul className="space-y-1.5 text-sm text-muted-foreground">
+                    {analysis.red_flags.map((s: string, i: number) => <li key={i}>• {s}</li>)}
+                  </ul>
                 </div>
               )}
             </div>

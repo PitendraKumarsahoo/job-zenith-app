@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Send, History } from "lucide-react";
+import { Send, History, ShieldCheck } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { sendTelegramTest } from "@/lib/telegram.functions";
+import { sendTelegramTest, saveTelegramCreds, deleteTelegramCreds, getTelegramStatus } from "@/lib/telegram.functions";
 import { timeAgo } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -18,6 +18,10 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function SettingsPage() {
   const qc = useQueryClient();
+  const statusFn = useServerFn(getTelegramStatus);
+  const saveCredsFn = useServerFn(saveTelegramCreds);
+  const deleteCredsFn = useServerFn(deleteTelegramCreds);
+
   const { data: settings } = useQuery({
     queryKey: ["user-settings"],
     queryFn: async () => {
@@ -26,6 +30,10 @@ function SettingsPage() {
       const { data } = await supabase.from("user_settings").select("*").eq("user_id", u.user.id).maybeSingle();
       return data;
     },
+  });
+  const { data: telegramStatus } = useQuery({
+    queryKey: ["telegram-status"],
+    queryFn: () => statusFn(),
   });
   const { data: history = [] } = useQuery({
     queryKey: ["search-history"],
@@ -41,21 +49,43 @@ function SettingsPage() {
     telegram_bot_token: "", telegram_chat_id: "",
     notify_new_matches: true, notify_application_updates: true,
   });
-  useEffect(() => { if (settings) setForm({
-    telegram_bot_token: settings.telegram_bot_token ?? "",
-    telegram_chat_id: settings.telegram_chat_id ?? "",
+  useEffect(() => { if (settings) setForm((f) => ({
+    ...f,
     notify_new_matches: settings.notify_new_matches,
     notify_application_updates: settings.notify_application_updates,
-  }); }, [settings]);
+  })); }, [settings]);
 
-  const saveMut = useMutation({
+  const savePrefsMut = useMutation({
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Not signed in");
-      const { error } = await supabase.from("user_settings").upsert({ user_id: u.user.id, ...form });
+      const { error } = await supabase.from("user_settings").upsert({
+        user_id: u.user.id,
+        notify_new_matches: form.notify_new_matches,
+        notify_application_updates: form.notify_application_updates,
+      });
       if (error) throw error;
+
+      // Save credentials via server function only if both fields were provided.
+      if (form.telegram_bot_token && form.telegram_chat_id) {
+        await saveCredsFn({ data: { bot_token: form.telegram_bot_token, chat_id: form.telegram_chat_id } });
+      }
     },
-    onSuccess: () => { toast.success("Settings saved"); qc.invalidateQueries({ queryKey: ["user-settings"] }); },
+    onSuccess: () => {
+      toast.success("Settings saved");
+      qc.invalidateQueries({ queryKey: ["user-settings"] });
+      qc.invalidateQueries({ queryKey: ["telegram-status"] });
+      setForm((f) => ({ ...f, telegram_bot_token: "", telegram_chat_id: "" }));
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const disconnectMut = useMutation({
+    mutationFn: () => deleteCredsFn(),
+    onSuccess: () => {
+      toast.success("Telegram disconnected");
+      qc.invalidateQueries({ queryKey: ["telegram-status"] });
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -65,6 +95,8 @@ function SettingsPage() {
     onSuccess: () => toast.success("Test sent — check Telegram"),
     onError: (e: any) => toast.error(e.message),
   });
+
+  const configured = !!telegramStatus?.configured;
 
   return (
     <div className="space-y-6">
@@ -78,14 +110,27 @@ function SettingsPage() {
         <p className="text-sm text-muted-foreground">
           Create a bot with <a className="underline hover:text-foreground" href="https://t.me/BotFather" target="_blank" rel="noreferrer">@BotFather</a> and paste the token. Then message your bot and grab your chat ID from <span className="font-mono">https://api.telegram.org/bot&lt;token&gt;/getUpdates</span>.
         </p>
+
+        {configured && (
+          <div className="flex items-center justify-between rounded-xl border border-success/40 bg-success/10 p-3">
+            <div className="flex items-center gap-2 text-sm">
+              <ShieldCheck className="h-4 w-4 text-success" />
+              <span>Telegram is connected. Your bot token is stored securely on the server and never sent back to the browser.</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => disconnectMut.mutate()} disabled={disconnectMut.isPending}>
+              Disconnect
+            </Button>
+          </div>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Label>Bot token</Label>
-            <Input className="mt-1.5 font-mono" type="password" placeholder="123456:ABC…" value={form.telegram_bot_token} onChange={(e) => setForm({ ...form, telegram_bot_token: e.target.value })} />
+            <Label>Bot token {configured && <span className="text-xs text-muted-foreground">(leave blank to keep current)</span>}</Label>
+            <Input className="mt-1.5 font-mono" type="password" autoComplete="off" placeholder={configured ? "•••••••• (saved)" : "123456:ABC…"} value={form.telegram_bot_token} onChange={(e) => setForm({ ...form, telegram_bot_token: e.target.value })} />
           </div>
           <div>
-            <Label>Chat ID</Label>
-            <Input className="mt-1.5 font-mono" placeholder="123456789" value={form.telegram_chat_id} onChange={(e) => setForm({ ...form, telegram_chat_id: e.target.value })} />
+            <Label>Chat ID {configured && <span className="text-xs text-muted-foreground">(leave blank to keep current)</span>}</Label>
+            <Input className="mt-1.5 font-mono" autoComplete="off" placeholder={configured ? "•••••••• (saved)" : "123456789"} value={form.telegram_chat_id} onChange={(e) => setForm({ ...form, telegram_chat_id: e.target.value })} />
           </div>
         </div>
         <div className="flex items-center justify-between rounded-xl border border-border bg-card/40 p-3">
@@ -97,8 +142,8 @@ function SettingsPage() {
           <Switch checked={form.notify_application_updates} onCheckedChange={(v) => setForm({ ...form, notify_application_updates: v })} />
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending} className="bg-gradient-primary text-primary-foreground shadow-glow">Save</Button>
-          <Button variant="outline" onClick={() => testMut.mutate()} disabled={testMut.isPending}>Send test message</Button>
+          <Button onClick={() => savePrefsMut.mutate()} disabled={savePrefsMut.isPending} className="bg-gradient-primary text-primary-foreground shadow-glow">Save</Button>
+          <Button variant="outline" onClick={() => testMut.mutate()} disabled={testMut.isPending || !configured}>Send test message</Button>
         </div>
       </section>
 

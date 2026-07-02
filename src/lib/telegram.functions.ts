@@ -14,24 +14,65 @@ async function sendMessage(botToken: string, chatId: string, text: string) {
   }
 }
 
+async function loadCreds(userId: string): Promise<{ bot_token: string; chat_id: string } | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("user_telegram_credentials")
+    .select("bot_token, chat_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data ?? null;
+}
+
+// -------- Save credentials (writes to private table via admin client) --------
+export const saveTelegramCreds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    bot_token: z.string().min(10).max(200),
+    chat_id: z.string().min(1).max(64),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("user_telegram_credentials")
+      .upsert({ user_id: context.userId, bot_token: data.bot_token, chat_id: data.chat_id });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// -------- Remove credentials --------
+export const deleteTelegramCreds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("user_telegram_credentials")
+      .delete()
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// -------- Return only whether creds exist (never leak the token/chat id) --------
+export const getTelegramStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const creds = await loadCreds(context.userId);
+    return { configured: !!creds };
+  });
+
+// -------- Send a test message --------
 export const sendTelegramTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ text: z.string().min(1).max(4000) }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: s } = await supabase
-      .from("user_settings")
-      .select("telegram_bot_token, telegram_chat_id")
-      .eq("user_id", userId)
-      .single();
-    if (!s?.telegram_bot_token || !s?.telegram_chat_id) {
-      throw new Error("Configure your Telegram bot token and chat ID in Settings first.");
-    }
-    await sendMessage(s.telegram_bot_token, s.telegram_chat_id, data.text);
+    const creds = await loadCreds(context.userId);
+    if (!creds) throw new Error("Configure your Telegram bot token and chat ID in Settings first.");
+    await sendMessage(creds.bot_token, creds.chat_id, data.text);
     return { ok: true };
   });
 
-// Fired when application status changes on the Kanban board.
+// -------- Fired when application status changes on the Kanban board --------
 export const notifyStatusChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
@@ -40,12 +81,13 @@ export const notifyStatusChange = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const [{ data: settings }, { data: row }] = await Promise.all([
-      supabase.from("user_settings").select("telegram_bot_token, telegram_chat_id, notify_application_updates").eq("user_id", userId).single(),
+    const [creds, { data: settings }, { data: row }] = await Promise.all([
+      loadCreds(userId),
+      supabase.from("user_settings").select("notify_application_updates").eq("user_id", userId).maybeSingle(),
       supabase.from("applied_jobs").select("status, job:jobs(title, company, apply_url)").eq("id", data.appliedId).eq("user_id", userId).single(),
     ]);
-    if (!settings?.telegram_bot_token || !settings?.telegram_chat_id) return { ok: false, reason: "not-configured" };
-    if (settings.notify_application_updates === false) return { ok: false, reason: "disabled" };
+    if (!creds) return { ok: false, reason: "not-configured" };
+    if (settings?.notify_application_updates === false) return { ok: false, reason: "disabled" };
     if (!row?.job) return { ok: false, reason: "no-job" };
 
     const emoji: Record<string, string> = {
@@ -69,7 +111,7 @@ export const notifyStatusChange = createServerFn({ method: "POST" })
       `Status: <i>${data.newStatus}</i>` +
       (job.apply_url ? `\n${job.apply_url}` : "");
 
-    await sendMessage(settings.telegram_bot_token, settings.telegram_chat_id, text);
+    await sendMessage(creds.bot_token, creds.chat_id, text);
     return { ok: true };
   });
 

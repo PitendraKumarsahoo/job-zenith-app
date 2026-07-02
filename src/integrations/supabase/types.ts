@@ -282,8 +282,6 @@ export type Database = {
           notify_new_matches: boolean
           preferred_locations: string[] | null
           preferred_roles: string[] | null
-          telegram_bot_token: string | null
-          telegram_chat_id: string | null
           theme: string
           updated_at: string
           user_id: string
@@ -294,8 +292,6 @@ export type Database = {
           notify_new_matches?: boolean
           preferred_locations?: string[] | null
           preferred_roles?: string[] | null
-          telegram_bot_token?: string | null
-          telegram_chat_id?: string | null
           theme?: string
           updated_at?: string
           user_id: string
@@ -306,9 +302,31 @@ export type Database = {
           notify_new_matches?: boolean
           preferred_locations?: string[] | null
           preferred_roles?: string[] | null
-          telegram_bot_token?: string | null
-          telegram_chat_id?: string | null
           theme?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_telegram_credentials: {
+        Row: {
+          bot_token: string
+          chat_id: string
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bot_token: string
+          chat_id: string
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bot_token?: string
+          chat_id?: string
+          created_at?: string
           updated_at?: string
           user_id?: string
         }

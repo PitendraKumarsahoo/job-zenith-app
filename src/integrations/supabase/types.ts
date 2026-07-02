@@ -55,6 +55,8 @@ export type Database = {
       job_match_scores: {
         Row: {
           created_at: string
+          feedback: number | null
+          feedback_note: string | null
           gaps: string[] | null
           job_id: string
           score: number
@@ -64,6 +66,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          feedback?: number | null
+          feedback_note?: string | null
           gaps?: string[] | null
           job_id: string
           score: number
@@ -73,6 +77,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          feedback?: number | null
+          feedback_note?: string | null
           gaps?: string[] | null
           job_id?: string
           score?: number

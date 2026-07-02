@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Sparkles, LayoutDashboard, Search, Bookmark, Briefcase, FileText, User, Settings, LogOut, Sun, Moon, Menu, X } from "lucide-react";
+import { Sparkles, LayoutDashboard, Search, Bookmark, Briefcase, FileText, User, Settings, LogOut, Sun, Moon, Menu, X, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -13,6 +13,7 @@ const nav = [
   { to: "/resume", label: "Resume", icon: FileText },
   { to: "/profile", label: "Profile", icon: User },
   { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/smoke-test", label: "Smoke test", icon: FlaskConical },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {

@@ -53,12 +53,20 @@ export const deleteTelegramCreds = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// -------- Return only whether creds exist (never leak the token/chat id) --------
+// -------- Return status with masked chat id (never leak the token) --------
 export const getTelegramStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const creds = await loadCreds(context.userId);
-    return { configured: !!creds };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("user_telegram_credentials")
+      .select("chat_id, updated_at")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!data) return { configured: false as const };
+    const cid = String(data.chat_id);
+    const masked = cid.length <= 4 ? "••" + cid.slice(-2) : "••••" + cid.slice(-4);
+    return { configured: true as const, chatIdMasked: masked, updatedAt: data.updated_at };
   });
 
 // -------- Send a test message --------

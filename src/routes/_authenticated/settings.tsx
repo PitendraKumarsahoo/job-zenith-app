@@ -111,15 +111,37 @@ function SettingsPage() {
           Create a bot with <a className="underline hover:text-foreground" href="https://t.me/BotFather" target="_blank" rel="noreferrer">@BotFather</a> and paste the token. Then message your bot and grab your chat ID from <span className="font-mono">https://api.telegram.org/bot&lt;token&gt;/getUpdates</span>.
         </p>
 
-        {configured && (
-          <div className="flex items-center justify-between rounded-xl border border-success/40 bg-success/10 p-3">
-            <div className="flex items-center gap-2 text-sm">
-              <ShieldCheck className="h-4 w-4 text-success" />
-              <span>Telegram is connected. Your bot token is stored securely on the server and never sent back to the browser.</span>
+        {configured ? (
+          <div className="rounded-xl border border-success/40 bg-success/10 p-4">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="mt-0.5 h-5 w-5 text-success" />
+              <div className="flex-1 space-y-1">
+                <div className="text-sm font-semibold">Telegram connected</div>
+                <div className="text-xs text-muted-foreground">
+                  Chat ID <span className="font-mono">{telegramStatus?.chatIdMasked}</span>
+                  {telegramStatus?.updatedAt && <> · updated {timeAgo(telegramStatus.updatedAt)}</>}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  <KeyRound className="mr-1 inline h-3 w-3" />
+                  Bot token is stored server-side and never sent back to the browser.
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => testMut.mutate()} disabled={testMut.isPending}>
+                  Test
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => disconnectMut.mutate()} disabled={disconnectMut.isPending}>
+                  Disconnect
+                </Button>
+              </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => disconnectMut.mutate()} disabled={disconnectMut.isPending}>
-              Disconnect
-            </Button>
+            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <RefreshCw className="h-3 w-3" /> To rotate, paste new values below and hit Save — the previous token is overwritten securely on the server.
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border bg-card/40 p-3 text-sm text-muted-foreground">
+            Not connected yet. Add your bot token and chat ID below to enable notifications.
           </div>
         )}
 

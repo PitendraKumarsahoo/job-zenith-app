@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Send, History, ShieldCheck } from "lucide-react";
+import { Send, History, ShieldCheck, RefreshCw, KeyRound } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { sendTelegramTest, saveTelegramCreds, deleteTelegramCreds, getTelegramStatus } from "@/lib/telegram.functions";
 import { timeAgo } from "@/lib/format";

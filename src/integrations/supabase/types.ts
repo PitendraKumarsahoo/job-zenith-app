@@ -19,6 +19,9 @@ export type Database = {
           applied_at: string
           id: string
           job_id: string
+          last_notified_status:
+            | Database["public"]["Enums"]["application_status"]
+            | null
           notes: string | null
           status: Database["public"]["Enums"]["application_status"]
           updated_at: string
@@ -28,6 +31,9 @@ export type Database = {
           applied_at?: string
           id?: string
           job_id: string
+          last_notified_status?:
+            | Database["public"]["Enums"]["application_status"]
+            | null
           notes?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           updated_at?: string
@@ -37,6 +43,9 @@ export type Database = {
           applied_at?: string
           id?: string
           job_id?: string
+          last_notified_status?:
+            | Database["public"]["Enums"]["application_status"]
+            | null
           notes?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           updated_at?: string
@@ -105,6 +114,7 @@ export type Database = {
           currency: string
           description: string
           experience_level: Database["public"]["Enums"]["experience_level"]
+          external_id: string | null
           id: string
           location: string
           posted_at: string
@@ -112,6 +122,7 @@ export type Database = {
           salary_max: number | null
           salary_min: number | null
           skills: string[]
+          source: string | null
           title: string
           work_mode: Database["public"]["Enums"]["work_mode"]
         }
@@ -123,6 +134,7 @@ export type Database = {
           currency?: string
           description: string
           experience_level?: Database["public"]["Enums"]["experience_level"]
+          external_id?: string | null
           id?: string
           location: string
           posted_at?: string
@@ -130,6 +142,7 @@ export type Database = {
           salary_max?: number | null
           salary_min?: number | null
           skills?: string[]
+          source?: string | null
           title: string
           work_mode?: Database["public"]["Enums"]["work_mode"]
         }
@@ -141,6 +154,7 @@ export type Database = {
           currency?: string
           description?: string
           experience_level?: Database["public"]["Enums"]["experience_level"]
+          external_id?: string | null
           id?: string
           location?: string
           posted_at?: string
@@ -148,10 +162,40 @@ export type Database = {
           salary_max?: number | null
           salary_min?: number | null
           skills?: string[]
+          source?: string | null
           title?: string
           work_mode?: Database["public"]["Enums"]["work_mode"]
         }
         Relationships: []
+      }
+      notified_jobs: {
+        Row: {
+          created_at: string
+          job_id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          job_id: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          job_id?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notified_jobs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -274,6 +318,69 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      telegram_notifications: {
+        Row: {
+          applied_id: string | null
+          attempts: number
+          chat_id_masked: string | null
+          created_at: string
+          id: string
+          job_id: string | null
+          kind: string
+          last_error: string | null
+          message: string
+          metadata: Json
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          applied_id?: string | null
+          attempts?: number
+          chat_id_masked?: string | null
+          created_at?: string
+          id?: string
+          job_id?: string | null
+          kind: string
+          last_error?: string | null
+          message: string
+          metadata?: Json
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          applied_id?: string | null
+          attempts?: number
+          chat_id_masked?: string | null
+          created_at?: string
+          id?: string
+          job_id?: string | null
+          kind?: string
+          last_error?: string | null
+          message?: string
+          metadata?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_notifications_applied_id_fkey"
+            columns: ["applied_id"]
+            isOneToOne: false
+            referencedRelation: "applied_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_notifications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_settings: {
         Row: {

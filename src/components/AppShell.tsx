@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Sparkles, LayoutDashboard, Search, Bookmark, Briefcase, FileText, User, Settings, LogOut, Sun, Moon, Menu, X, FlaskConical } from "lucide-react";
+import { Sparkles, LayoutDashboard, Search, Bookmark, Briefcase, FileText, User, Settings, LogOut, Sun, Moon, Menu, X, FlaskConical, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -10,6 +10,7 @@ const nav = [
   { to: "/jobs", label: "Search jobs", icon: Search },
   { to: "/saved", label: "Saved", icon: Bookmark },
   { to: "/applied", label: "Applied", icon: Briefcase },
+  { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/resume", label: "Resume", icon: FileText },
   { to: "/profile", label: "Profile", icon: User },
   { to: "/settings", label: "Settings", icon: Settings },

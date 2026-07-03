@@ -17,9 +17,11 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
 import { Route as AuthenticatedResumeRouteImport } from './routes/_authenticated/resume'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAppliedRouteImport } from './routes/_authenticated/applied'
+import { Route as ApiPublicHooksJobAgentRouteImport } from './routes/api/public/hooks/job-agent'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -60,6 +62,12 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
   id: '/jobs',
   path: '/jobs',
@@ -75,6 +83,11 @@ const AuthenticatedAppliedRoute = AuthenticatedAppliedRouteImport.update({
   path: '/applied',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicHooksJobAgentRoute = ApiPublicHooksJobAgentRouteImport.update({
+  id: '/api/public/hooks/job-agent',
+  path: '/api/public/hooks/job-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,11 +95,13 @@ export interface FileRoutesByFullPath {
   '/applied': typeof AuthenticatedAppliedRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/jobs': typeof AuthenticatedJobsRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/resume': typeof AuthenticatedResumeRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/smoke-test': typeof AuthenticatedSmokeTestRoute
+  '/api/public/hooks/job-agent': typeof ApiPublicHooksJobAgentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,11 +109,13 @@ export interface FileRoutesByTo {
   '/applied': typeof AuthenticatedAppliedRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/jobs': typeof AuthenticatedJobsRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/resume': typeof AuthenticatedResumeRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/smoke-test': typeof AuthenticatedSmokeTestRoute
+  '/api/public/hooks/job-agent': typeof ApiPublicHooksJobAgentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -108,11 +125,13 @@ export interface FileRoutesById {
   '/_authenticated/applied': typeof AuthenticatedAppliedRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/jobs': typeof AuthenticatedJobsRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/resume': typeof AuthenticatedResumeRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/smoke-test': typeof AuthenticatedSmokeTestRoute
+  '/api/public/hooks/job-agent': typeof ApiPublicHooksJobAgentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -122,11 +141,13 @@ export interface FileRouteTypes {
     | '/applied'
     | '/dashboard'
     | '/jobs'
+    | '/notifications'
     | '/profile'
     | '/resume'
     | '/saved'
     | '/settings'
     | '/smoke-test'
+    | '/api/public/hooks/job-agent'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -134,11 +155,13 @@ export interface FileRouteTypes {
     | '/applied'
     | '/dashboard'
     | '/jobs'
+    | '/notifications'
     | '/profile'
     | '/resume'
     | '/saved'
     | '/settings'
     | '/smoke-test'
+    | '/api/public/hooks/job-agent'
   id:
     | '__root__'
     | '/'
@@ -147,17 +170,20 @@ export interface FileRouteTypes {
     | '/_authenticated/applied'
     | '/_authenticated/dashboard'
     | '/_authenticated/jobs'
+    | '/_authenticated/notifications'
     | '/_authenticated/profile'
     | '/_authenticated/resume'
     | '/_authenticated/saved'
     | '/_authenticated/settings'
     | '/_authenticated/smoke-test'
+    | '/api/public/hooks/job-agent'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicHooksJobAgentRoute: typeof ApiPublicHooksJobAgentRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -218,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/jobs': {
       id: '/_authenticated/jobs'
       path: '/jobs'
@@ -239,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppliedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/job-agent': {
+      id: '/api/public/hooks/job-agent'
+      path: '/api/public/hooks/job-agent'
+      fullPath: '/api/public/hooks/job-agent'
+      preLoaderRoute: typeof ApiPublicHooksJobAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -246,6 +286,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppliedRoute: typeof AuthenticatedAppliedRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedJobsRoute: typeof AuthenticatedJobsRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedResumeRoute: typeof AuthenticatedResumeRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
@@ -257,6 +298,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppliedRoute: AuthenticatedAppliedRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedJobsRoute: AuthenticatedJobsRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedResumeRoute: AuthenticatedResumeRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
@@ -271,6 +313,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicHooksJobAgentRoute: ApiPublicHooksJobAgentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
